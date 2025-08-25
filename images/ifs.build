@@ -1,0 +1,165 @@
+[search=/home/vadymkharchuk/qnx800/target/qnx/x86_64:/home/vadymkharchuk/qnx800/target/qnx/x86_64/boot/sys:/home/vadymkharchuk/qnx800/target/qnx:/Users/vadymkharchuk/qnx800/bsp/x86_64_qemu_qnx_bsp/images:.]
+
+[uid=0 gid=0 dperms=0555 perms=0555]
+
+[image=20m]
+[virtual=x86_64,multiboot ] boot = {
+    startup-x86 -D8250..115200 -zz
+    # Setting PATH and LD_LIBRARY_PATH here allows them to be set both for
+    # procnto as well as programs run from the IFS startup script.
+    PATH=/proc/boot:/system/bin
+    LD_LIBRARY_PATH=/proc/boot:/system/lib:/system/lib/dll
+    [+keeplinked uid=0 gid=0 perms=0700 ] CONFIG_PATH=/proc/boot:/system/etc procnto-smp-instr -v -mr -d 0777 -u 0777
+}
+
+[+script] startup-script = {
+    # As various programs expect some binaries in fixed location, create procmgr symlinks to them.
+    # We can't specify these paths for the files themselves since if we build a non-union system,
+    # the actual paths would be things like /ifs/bin/sh
+    procmgr_symlink /proc/boot/ksh /bin/ksh
+    procmgr_symlink /proc/boot/ksh /bin/sh
+    procmgr_symlink /system/bin/cp /bin/cp
+    procmgr_symlink /system/bin/rm /bin/rm
+    procmgr_symlink /data/var/tmp /tmp
+    procmgr_symlink /system/bin/ssh /usr/bin/ssh
+    procmgr_symlink /proc/boot/ldqnx-64.so.2 /usr/lib/ldqnx-64.so.2
+
+    # **FIXME**
+    # Processes should usually use _CS_CONFIG_PATH to locate configuration files.  But for now
+    # create symlinks for some locations that can't move.
+    procmgr_symlink /system/etc/terminfo /usr/share/terminfo
+    procmgr_symlink /data/var/etc /etc
+    procmgr_symlink /data/var /var
+    procmgr_symlink /system/etc/profile /etc/profile
+
+
+
+    display_msg "Start of QNX boot process"
+
+    HOME=/data/home/root
+    PCI_BKWD_COMPAT_MODULE=/proc/boot/pci_bkwd_compat.so
+    PCI_SLOG_MODULE=pci_slog2.so
+    PCI_CAP_MODULE_DIR=/proc/boot
+
+    #~30.builtin
+    /proc/boot/startup.sh
+    setconf TIMEZONE UTC0
+    mount -uo noexec /dev/shmem
+    rtc hw
+
+    display_msg "Startup complete"
+    uname -a
+}
+
+startup.sh=startup.sh
+
+#############################################
+### Utilities
+#############################################
+bin/on
+# waitfor and ability are same binary as on
+[type=link] waitfor=on
+[type=link] ability=on
+sbin/rtc
+bin/setfacl
+bin/ksh
+bin/pidin
+# Allow sh to be found in PATH
+[type=link] sh=ksh
+bin/mount
+usr/bin/getconf
+# getconf and setconf are same binary
+[type=link] setconf=getconf
+sbin/devc-ser8250
+bin/slog2info
+
+#############################################
+### Customization
+#############################################
+
+[-autolink]
+sbin/devb-eide
+bin/slogger2
+sbin/fsevmgr
+
+lib/libc.so.6
+usr/lib/ldqnx-64.so.2
+lib/libgcc_s.so.1
+lib/libm.so.3
+lib/libcam.so.2
+lib/dll/io-blk.so
+lib/dll/cam-disk.so
+lib/dll/fs-qnx6.so
+lib/dll/fs-dos.so
+lib/libslog2.so.1
+[type=link] libslog2.so=libslog2.so.1
+usr/lib/libcrypto.so.3
+lib/libsocket.so.4
+[type=link] libsocket.so=libsocket.so.4
+usr/lib/libz.so.2
+lib/libslog2shim.so.1
+lib/libsecpol.so.1
+lib/libpci.so.3.0
+lib/libjson.so.1
+lib/libslog2parse.so.1
+lib/libjail.so.1
+lib/libfsnotify.so.1
+
+
+usr/lib/libqcrypto.so.1.0
+lib/dll/qcrypto-openssl-3.so
+lib/libqh.so.1
+lib/libregex.so.1
+
+
+#############################################
+### Toybox
+#############################################
+toybox=usr/bin/toybox
+[type=link] cat=toybox
+[type=link] chmod=toybox
+[type=link] dd=toybox
+[type=link] echo=toybox
+[type=link] ln=toybox
+[type=link] ls=toybox
+[type=link] rm=toybox
+[type=link] grep=toybox
+[type=link] sleep=toybox
+
+
+#############################################
+### PCI
+#############################################
+
+[perms=0444] pci_server.cfg = {
+[buscfg]
+DO_BUS_CONFIG=no
+
+[envars]
+PCI_DEBUG_MODULE=pci_debug2.so
+PCI_HW_MODULE=pci_hw-Intel_x86.so
+PCI_HW_CONFIG_FILE=/proc/boot/pci_hw.cfg
+}
+
+[perms=0444] pci_hw.cfg = {
+[interrupts]
+B0:D17:F0    A    18
+B0:D17:F0    B    19
+B0:D17:F0    C    16
+B0:D17:F0    D    17
+B3:D0:F0     A    18
+B3:D0:F0     B    19
+B3:D0:F0     C    16
+B3:D0:F0     D    17
+}
+
+lib/dll/pci/pci_hw-Intel_x86.so
+lib/dll/pci/pci_slog2.so
+lib/dll/pci/pci_cap-0x01.so
+lib/dll/pci/pci_cap-0x05.so
+lib/dll/pci/pci_cap-0x10.so
+lib/dll/pci/pci_cap-0x11.so
+lib/dll/pci/pci_strings.so
+lib/dll/pci/pci_bkwd_compat.so
+lib/dll/pci/pci_debug2.so
+sbin/pci-server
