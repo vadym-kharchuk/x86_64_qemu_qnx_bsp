@@ -1,0 +1,10 @@
+--- ./output/build/startup.sh.orig	2025-08-25 20:37:15
++++ ./output/build/startup.sh	2025-08-25 20:37:29
+@@ -28,6 +28,7 @@
+ echo "---> Starting devb"
+   devb-eide  blk cache=64M,auto=partition,vnode=2000,ncache=2000,commit=low 
+ waitfor /dev/hd0
++waitfor /dev/hd0
+ 
+ echo "---> Mounting file systems"
+ mount_fs.sh
