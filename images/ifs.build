@@ -52,6 +52,7 @@
 }
 
 startup.sh=startup.sh
+mount_fs.sh=mount_fs.sh
 
 #############################################
 ### Utilities

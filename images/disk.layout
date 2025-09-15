@@ -1,0 +1,2 @@
+[sector_size=512 cylinders=646481 sectors_per_track=1 heads=1 start_at_cylinder=1]
+[partition=2 boot=false type=178  num_sectors=487376] "output/system.part"

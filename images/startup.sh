@@ -18,10 +18,23 @@ devc-ser8250 -e
 
 on  -d -t /dev/ser1 ksh -l
 
-echo "---> Starting fsevmgr"
 fsevmgr
 
 echo "---> Starting devb"
 devb-eide  blk cache=64M,auto=partition,vnode=2000,ncache=2000,commit=low
+waitfor /dev/hd0 10
 
-waitfor /dev/hd0 5
+echo "---> Mounting file systems"
+mount_fs.sh
+
+pipe
+waitfor /dev/pipe
+
+echo "---> Configuring networking "
+io-sock -m phy -m pci -m usb -d vtnet_pci
+
+if_up -p -r 20 vtnet0
+ifconfig vtnet0 up
+ifconfig vtnet0 192.168.64.33
+sysctl -w net.inet.icmp.bmcastecho=1 > /dev/null
+

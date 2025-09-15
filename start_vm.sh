@@ -4,12 +4,13 @@ echo "Starting VM"
 
 OUTPUT_FILES="images/"
 KERNEL_IMAGE="${OUTPUT_FILES}/ifs.bin"
-DISK_IMAGE="${OUTPUT_FILES}/disk-qemu.vmdk"
+DISK_IMAGE="${OUTPUT_FILES}/system.img"
+#DISK_IMAGE="${OUTPUT_FILES}/disk-qemu.vmdk"
 
 sudo qemu-system-x86_64 \
 --cpu max \
 -m 2G \
--drive file=${DISK_IMAGE},if=ide,id=drv0 \
+-drive file=${DISK_IMAGE},if=ide,id=drv0,format=raw \
 -kernel ${KERNEL_IMAGE} \
 -serial mon:stdio \
 -device virtio-net-pci,netdev=net0 \
